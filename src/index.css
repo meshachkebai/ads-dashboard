@@ -1,0 +1,201 @@
+/* Global Theme System */
+
+/* Light theme (default) */
+:root {
+  /* Background colors */
+  --bg-primary: #f8f9fa;
+  --bg-secondary: #f8f9fa;
+  --bg-tertiary: #e9ecef;
+  --card-bg: #ffffff;
+  --bg-elevated: #ffffff;
+  
+  /* Text colors */
+  --text-primary: #212529;
+  --text-secondary: #6c757d;
+  --text-muted: #adb5bd;
+  
+  /* App-specific brand colors */
+  --brand-primary: #A14189;
+  --brand-secondary: #6c757d;
+  --brand-accent: #28a745;
+  --brand-warning: #ffc107;
+  --brand-danger: #dc3545;
+  
+  /* Interactive elements */
+  --hover-overlay: rgba(0, 0, 0, 0.05);
+  --hover-bg: #f0f0f0;
+  --active-bg: #f0e6ed;
+  --border-color: #dee2e6;
+  --border-focus: #A14189;
+  --shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --danger: #dc3545;
+  
+  /* Status colors */
+  --success: #28a745;
+  --info: #17a2b8;
+  --warning: #ffc107;
+  --error: #dc3545;
+}
+
+/* Dark theme */
+[data-theme="dark"] {
+  /* Background colors */
+  --bg-primary: #1a1a1a;
+  --bg-secondary: #2d2d2d;
+  --bg-tertiary: #404040;
+  --card-bg: #2d2d2d;
+  --bg-elevated: #2d2d2d;
+  
+  /* Text colors */
+  --text-primary: #ffffff;
+  --text-secondary: #b3b3b3;
+  --text-muted: #666666;
+  
+  /* App-specific brand colors (adjusted for dark mode) */
+  --brand-primary: #D4669A;
+  --brand-secondary: #868e96;
+  --brand-accent: #51cf66;
+  --brand-warning: #ffd43b;
+  --brand-danger: #ff6b6b;
+  
+  /* Interactive elements */
+  --hover-overlay: rgba(255, 255, 255, 0.05);
+  --hover-bg: #404040;
+  --active-bg: #3d2d38;
+  --border-color: #495057;
+  --border-focus: #D4669A;
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
+  --danger: #ff6b6b;
+  
+  /* Status colors */
+  --success: #51cf66;
+  --info: #339af0;
+  --warning: #ffd43b;
+  --error: #ff6b6b;
+}
+
+/* Global base styles */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Quicksand', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-weight: 300;
+  background: linear-gradient(135deg, #A14189 0%, #FFFFFF 100%);
+  color: var(--text-primary);
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+[data-theme="dark"] body {
+  background: var(--bg-primary);
+}
+
+/* Common component classes using theme variables */
+.card {
+  background-color: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: var(--shadow);
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+}
+
+.btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background-color: var(--brand-primary);
+  color: white;
+}
+
+.btn-primary:hover {
+  filter: brightness(110%);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background-color: var(--brand-secondary);
+  color: white;
+}
+
+.btn-success {
+  background-color: var(--brand-accent);
+  color: white;
+}
+
+.btn-warning {
+  background-color: var(--brand-warning);
+  color: var(--text-primary);
+}
+
+.btn-danger {
+  background-color: var(--brand-danger);
+  color: white;
+}
+
+/* Text utilities */
+.text-primary { color: var(--text-primary); }
+.text-secondary { color: var(--text-secondary); }
+.text-muted { color: var(--text-muted); }
+
+.text-brand { color: var(--brand-primary); }
+.text-success { color: var(--success); }
+.text-warning { color: var(--warning); }
+.text-error { color: var(--error); }
+
+/* Background utilities */
+.bg-primary { background-color: var(--bg-primary); }
+.bg-secondary { background-color: var(--bg-secondary); }
+.bg-tertiary { background-color: var(--bg-tertiary); }
+
+/* Input styling */
+input, textarea, select {
+  background-color: var(--bg-primary);
+  border: 2px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 0.5rem;
+  border-radius: 6px;
+  transition: border-color 0.2s ease;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--brand-primary);
+}
+
+/* Theme toggle button */
+.theme-toggle-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  color: var(--text-primary);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.theme-toggle-icon:hover {
+  background: var(--bg-tertiary);
+  transform: scale(1.1);
+}
