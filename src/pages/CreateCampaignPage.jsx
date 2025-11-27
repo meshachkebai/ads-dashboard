@@ -1,17 +1,20 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
+import { uploadAdToR2, getAudioDuration } from '../services/r2Upload';
 import './CreateCampaignPage.css';
 
 export default function CreateCampaignPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [audioFile, setAudioFile] = useState(null);
+  const [artworkFile, setArtworkFile] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     budget: '',
     target_audience: '',
-    ad_type: 'standard',
+    ad_type: 'audio',
     priority: '1',
     status: 'draft'
   });
@@ -30,40 +33,87 @@ export default function CreateCampaignPage() {
     try {
       const accessCodeId = localStorage.getItem('access_code_id');
       const brandName = localStorage.getItem('brand_name');
+
+      let audioUrl = null;
+      let artworkUrl = null;
+      let duration = 30;
+
+      // Upload audio ad to R2 if audio file is provided
+      if (audioFile && formData.ad_type === 'audio') {
+        console.log('Uploading audio ad to R2...');
+        
+        // Get audio duration
+        try {
+          duration = await getAudioDuration(audioFile);
+        } catch (err) {
+          console.warn('Could not detect audio duration, using default 30s');
+        }
+
+        const uploadResult = await uploadAdToR2({
+          audioFile,
+          artworkFile,
+          brandName,
+          campaignName: formData.name,
+          adName: `${formData.name} v1`
+        });
+
+        audioUrl = uploadResult.audioUrl;
+        artworkUrl = uploadResult.artworkUrl;
+        
+        console.log('Audio ad uploaded successfully:', { audioUrl, artworkUrl });
+      }
       
-      // First create the campaign
+      // Create campaign with audio URL in assets
       const { data: campaign, error: campaignError } = await supabase
         .from('interactive_ad_campaigns')
         .insert([{
           brand_name: brandName,
           name: formData.name,
-          ad_type: formData.ad_type || 'standard',
+          ad_type: formData.ad_type || 'audio',
           priority: parseInt(formData.priority) || 1,
-          is_active: formData.status === 'active'
+          is_active: false, // Always start as inactive, admin must approve
+          assets: formData.ad_type === 'audio' ? {
+            audio_url: audioUrl,
+            artwork_url: artworkUrl,
+            duration: duration,
+            skip_delay: 5
+          } : {},
+          targeting: {
+            userSegment: 'free',
+            frequencyCap: 3
+          },
+          schedule: {
+            start_date: new Date().toISOString()
+          }
         }])
         .select()
         .single();
 
       if (campaignError) throw campaignError;
 
-      // Then create the submission linking the brand to the campaign
+      // Create submission for admin approval
       const { error: submissionError } = await supabase
         .from('ad_campaign_submissions')
         .insert([{
-          brand_access_code_id: accessCodeId,
-          campaign_id: campaign.id,
-          status: formData.status === 'active' ? 'submitted' : 'draft',
-          metadata: {
+          ad_campaign_id: campaign.id,
+          submitter_id: accessCodeId,
+          status: 'pending',
+          submission_data: {
             description: formData.description,
             budget: parseFloat(formData.budget),
-            target_audience: formData.target_audience
+            target_audience: formData.target_audience,
+            audio_url: audioUrl,
+            artwork_url: artworkUrl,
+            duration: duration
           }
         }]);
 
       if (submissionError) throw submissionError;
       
-      navigate('/dashboard/campaigns');
+      alert('Campaign submitted for approval!');
+      navigate('/campaigns');
     } catch (err) {
+      console.error('Error creating campaign:', err);
       alert('Error creating campaign: ' + err.message);
     } finally {
       setLoading(false);
@@ -103,7 +153,7 @@ export default function CreateCampaignPage() {
         </div>
 
         <div className="form-group">
-          <label htmlFor="budget">Budget ($) *</label>
+          <label htmlFor="budget">Budget (PGK) *</label>
           <input
             type="number"
             id="budget"
@@ -137,12 +187,43 @@ export default function CreateCampaignPage() {
             value={formData.ad_type}
             onChange={handleChange}
           >
-            <option value="standard">Standard</option>
-            <option value="video">Video</option>
-            <option value="interactive">Interactive</option>
-            <option value="audio">Audio</option>
+            <option value="audio">Audio Ad</option>
+            <option value="static">Static Banner</option>
+            <option value="tap-reveal">Tap Reveal</option>
+            <option value="pour-animation">Pour Animation</option>
           </select>
         </div>
+
+        {formData.ad_type === 'audio' && (
+          <>
+            <div className="form-group">
+              <label htmlFor="audioFile">Audio File (MP3) *</label>
+              <input
+                type="file"
+                id="audioFile"
+                accept="audio/mpeg,audio/mp3"
+                onChange={(e) => setAudioFile(e.target.files[0])}
+                required
+              />
+              {audioFile && (
+                <p className="file-info">Selected: {audioFile.name} ({(audioFile.size / 1024 / 1024).toFixed(2)} MB)</p>
+              )}
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="artworkFile">Artwork (Optional)</label>
+              <input
+                type="file"
+                id="artworkFile"
+                accept="image/jpeg,image/jpg,image/png"
+                onChange={(e) => setArtworkFile(e.target.files[0])}
+              />
+              {artworkFile && (
+                <p className="file-info">Selected: {artworkFile.name}</p>
+              )}
+            </div>
+          </>
+        )}
 
         <div className="form-group">
           <label htmlFor="priority">Priority (1-10)</label>
@@ -166,9 +247,10 @@ export default function CreateCampaignPage() {
             value={formData.status}
             onChange={handleChange}
           >
-            <option value="draft">Draft</option>
-            <option value="active">Active</option>
+            <option value="draft">Save as Draft</option>
+            <option value="pending">Submit for Approval</option>
           </select>
+          <p className="help-text">Campaigns must be approved by admin before going live</p>
         </div>
 
         <div className="form-actions">
